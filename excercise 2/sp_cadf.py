@@ -1,8 +1,10 @@
 import datetime
+from math import log
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
+from statsmodels.api import add_constant
 from statsmodels.regression.linear_model import OLS
 from statsmodels.tsa.adfvalues import mackinnonp
 from statsmodels.tsa.tsatools import add_trend, lagmat
@@ -11,10 +13,11 @@ SUB_SP_INDICES = ['IR', 'INTC', 'ICE', 'IP', 'IPG',
                   'IFF', 'INTU', 'ISRG', 'IVZ', 'INVH', 'IQV']
 
 
-def adf(ts, maxlag=1):
-    """
-    Augmented Dickey-Fuller unit root test
-    """
+def parser(s):
+    return datetime.strptime(s, '%Y-%m-%d')
+
+
+def merge(ts, maxlag=1):
     # make sure we are working with an array, convert if necessary
     ts = np.asarray(ts)
 
@@ -32,6 +35,14 @@ def adf(ts, maxlag=1):
     # replace 0 xdiff with level of x
     tsdall[:, 0] = ts[-nobs - 1:-1]
     tsdshort = tsdiff[-nobs:]
+    return tsdshort, tsdall
+
+
+def adf(ts, maxlag=1):
+    """
+    Augmented Dickey-Fuller unit root test
+    """
+    tsdshort, tsdall = merge(ts, maxlag)
 
     # Calculate the linear regression using an ordinary least squares model
     results = OLS(tsdshort, add_trend(tsdall[:, :maxlag + 1], 'c')).fit()
@@ -53,31 +64,71 @@ def cadf(x, y):
     return adf(ols_result.resid)
 
 
-def parser(s):
-    return datetime.strptime(s, '%Y-%m-%d')
-
-
 SP_INDICES = ['MMM', 'AOS', 'ABT', 'ABBV', 'ABMD', 'ACN', 'ATVI', 'ADM', 'ADBE', 'ADP', 'AAP', 'AES', 'AFL', 'A', 'APD', 'AKAM', 'ALK', 'ALB', 'ARE', 'ALGN', 'ALLE', 'LNT', 'ALL', 'GOOGL', 'GOOG', 'MO', 'AMZN', 'AMCR', 'AMD', 'AEE', 'AAL', 'AEP', 'AXP', 'AIG', 'AMT', 'AWK', 'AMP', 'ABC', 'AME', 'AMGN', 'APH', 'ADI', 'ANSS', 'AON', 'APA', 'AAPL', 'AMAT', 'APTV', 'ACGL', 'ANET', 'AJG', 'AIZ', 'T', 'ATO', 'ADSK', 'AZO', 'AVB', 'AVY', 'BKR', 'BALL', 'BAC', 'BBWI', 'BAX', 'BDX', 'WRB', 'BBY', 'BIO', 'TECH', 'BIIB', 'BLK', 'BK', 'BA', 'BKNG', 'BWA', 'BXP', 'BSX', 'BMY', 'AVGO', 'BR', 'BRO', 'BF.B', 'CHRW', 'CDNS', 'CZR', 'CPT', 'CPB', 'COF', 'CAH', 'KMX', 'CCL', 'CARR', 'CTLT', 'CAT', 'CBOE', 'CBRE', 'CDW', 'CE', 'CNC', 'CNP', 'CDAY', 'CF', 'CRL', 'SCHW', 'CHTR', 'CVX', 'CMG', 'CB', 'CHD', 'CI', 'CINF', 'CTAS', 'CSCO', 'C', 'CFG', 'CLX', 'CME', 'CMS', 'KO', 'CTSH', 'CL', 'CMCSA', 'CMA', 'CAG', 'COP', 'ED', 'STZ', 'CEG', 'COO', 'CPRT', 'GLW', 'CTVA', 'CSGP', 'COST', 'CTRA', 'CCI', 'CSX', 'CMI', 'CVS', 'DHI', 'DHR', 'DRI', 'DVA', 'DE', 'DAL', 'XRAY', 'DVN', 'DXCM', 'FANG', 'DLR', 'DFS', 'DISH', 'DIS', 'DG', 'DLTR', 'D', 'DPZ', 'DOV', 'DOW', 'DTE', 'DUK', 'DD', 'DXC', 'EMN', 'ETN', 'EBAY', 'ECL', 'EIX', 'EW', 'EA', 'ELV', 'LLY', 'EMR', 'ENPH', 'ETR', 'EOG', 'EPAM', 'EQT', 'EFX', 'EQIX', 'EQR', 'ESS', 'EL', 'ETSY', 'RE', 'EVRG', 'ES', 'EXC', 'EXPE', 'EXPD', 'EXR', 'XOM', 'FFIV', 'FDS', 'FAST', 'FRT', 'FDX', 'FITB', 'FRC', 'FE', 'FIS', 'FISV', 'FLT', 'FMC', 'F', 'FTNT', 'FTV', 'FBHS', 'FOXA', 'FOX', 'BEN', 'FCX', 'GRMN', 'IT', 'GEN', 'GNRC', 'GD', 'GE', 'GIS', 'GM', 'GPC', 'GILD', 'GL', 'GPN', 'GS', 'HAL', 'HIG', 'HAS', 'HCA', 'PEAK', 'HSIC', 'HSY', 'HES', 'HPE', 'HLT', 'HOLX', 'HD', 'HON', 'HRL', 'HST', 'HWM', 'HPQ', 'HUM', 'HBAN', 'HII', 'IBM', 'IEX', 'IDXX', 'ITW', 'ILMN', 'INCY',
               'IR', 'INTC', 'ICE', 'IP', 'IPG', 'IFF', 'INTU', 'ISRG', 'IVZ', 'INVH', 'IQV', 'IRM', 'JBHT', 'JKHY', 'J', 'JNJ', 'JCI', 'JPM', 'JNPR', 'K', 'KDP', 'KEY', 'KEYS', 'KMB', 'KIM', 'KMI', 'KLAC', 'KHC', 'KR', 'LHX', 'LH', 'LRCX', 'LW', 'LVS', 'LDOS', 'LEN', 'LNC', 'LIN', 'LYV', 'LKQ', 'LMT', 'L', 'LOW', 'LUMN', 'LYB', 'MTB', 'MRO', 'MPC', 'MKTX', 'MAR', 'MMC', 'MLM', 'MAS', 'MA', 'MTCH', 'MKC', 'MCD', 'MCK', 'MDT', 'MRK', 'META', 'MET', 'MTD', 'MGM', 'MCHP', 'MU', 'MSFT', 'MAA', 'MRNA', 'MHK', 'MOH', 'TAP', 'MDLZ', 'MPWR', 'MNST', 'MCO', 'MS', 'MOS', 'MSI', 'MSCI', 'NDAQ', 'NTAP', 'NFLX', 'NWL', 'NEM', 'NWSA', 'NWS', 'NEE', 'NKE', 'NI', 'NDSN', 'NSC', 'NTRS', 'NOC', 'NCLH', 'NRG', 'NUE', 'NVDA', 'NVR', 'NXPI', 'ORLY', 'OXY', 'ODFL', 'OMC', 'ON', 'OKE', 'ORCL', 'OGN', 'OTIS', 'PCAR', 'PKG', 'PARA', 'PH', 'PAYX', 'PAYC', 'PYPL', 'PNR', 'PEP', 'PKI', 'PFE', 'PCG', 'PM', 'PSX', 'PNW', 'PXD', 'PNC', 'POOL', 'PPG', 'PPL', 'PFG', 'PG', 'PGR', 'PLD', 'PRU', 'PEG', 'PTC', 'PSA', 'PHM', 'QRVO', 'PWR', 'QCOM', 'DGX', 'RL', 'RJF', 'RTX', 'O', 'REG', 'REGN', 'RF', 'RSG', 'RMD', 'RHI', 'ROK', 'ROL', 'ROP', 'ROST', 'RCL', 'SPGI', 'CRM', 'SBAC', 'SLB', 'STX', 'SEE', 'SRE', 'NOW', 'SHW', 'SBNY', 'SPG', 'SWKS', 'SJM', 'SNA', 'SEDG', 'SO', 'LUV', 'SWK', 'SBUX', 'STT', 'STE', 'SYK', 'SIVB', 'SYF', 'SNPS', 'SYY', 'TMUS', 'TROW', 'TTWO', 'TPR', 'TRGP', 'TGT', 'TEL', 'TDY', 'TFX', 'TER', 'TSLA', 'TXN', 'TXT', 'TMO', 'TJX', 'TSCO', 'TT', 'TDG', 'TRV', 'TRMB', 'TFC', 'TYL', 'TSN', 'USB', 'UDR', 'ULTA', 'UNP', 'UAL', 'UPS', 'URI', 'UNH', 'UHS', 'VLO', 'VTR', 'VRSN', 'VRSK', 'VZ', 'VRTX', 'VFC', 'VTRS', 'VICI', 'V', 'VNO', 'VMC', 'WAB', 'WBA', 'WMT', 'WBD', 'WM', 'WAT', 'WEC', 'WFC', 'WELL', 'WST', 'WDC', 'WRK', 'WY', 'WHR', 'WMB', 'WTW', 'GWW', 'WYNN', 'XEL', 'XYL', 'YUM', 'ZBRA', 'ZBH', 'ZION', 'ZTS']
 
-full_stock_data = yf.download(SP_INDICES, '2020-11-01', '2021-11-01')
+RESOURCE = SUB_SP_INDICES
 
-# print(full_stock_data['Volume']['A'])
+full_stock_data = yf.download(RESOURCE, '2020-11-01', '2021-11-01')
+
 stationary_series = []
 cnt = 0
-for i in SP_INDICES:
-    if cnt == (len(SP_INDICES)/2)+1:
+for i in RESOURCE:
+    if cnt == (len(RESOURCE)/2)+1:
         break
     cnt += 1
-    for j in SP_INDICES:
+    for j in RESOURCE:
         if i == j:
             continue
         try:
             if cadf(full_stock_data['Volume'][i], full_stock_data['Volume'][j]) <= 0.05:
                 stationary_series.append([i, j])
         except:
-            # print(i, j, "one of these doesn't exist")
             continue
 
 
-print(stationary_series)
+def hurst(price, min_lag=2, max_lag=100):
+    lags = np.arange(min_lag, max_lag + 1)
+    tau = [np.std(np.subtract(price[lag:], price[:-lag]))
+           for lag in lags]
+    m = np.polyfit(np.log10(lags), np.log10(tau), 1)
+    return m, lags, tau
+
+
+def half_life(z_array):
+    z_lag = np.roll(z_array, 1)
+    z_lag[0] = 0
+    z_ret = z_array - z_lag
+    z_ret[0] = 0
+
+    # adds intercept terms to X variable for regression
+    z_lag2 = add_constant(z_lag)
+
+    model = OLS(z_ret, z_lag2)
+    res = model.fit()
+
+    halflife = -log(2) / res.params[1]
+    return halflife
+
+
+hurst_dict = {}
+for st in stationary_series:
+    df1 = full_stock_data['Volume'][st[0]]
+    df2 = full_stock_data['Volume'][st[1]]
+    ols_result = OLS(full_stock_data['Volume'][st[0]],
+                     full_stock_data['Volume'][st[1]]).fit()
+    df3, _ = merge(ols_result.resid)
+
+    m_mr, lag_mr, rs_mr = hurst(df3)
+    hl = half_life(df3)
+    if (m_mr[0] <= 0.4 and m_mr[0] >= 0 and hl < 50):
+        hurst_dict[st[0]+':'+st[1]] = [m_mr[0], hl]
+
+
+print(hurst_dict.keys())
+
+
+# د) strategy reverting-mean Linear که در اسلاید شماره 19 فصل strategies reverting mean آمده را روي
+# 10 سري فوق اعمال نموده و سه معیار return percent annual ،ratio Sharpe و drawdown max را براي آنها
+# محاسبه نمایید. از زمان life-half براي اندازه back-look در محاسبهي average moving و standard moving
+# deviation استفاده نمایید.

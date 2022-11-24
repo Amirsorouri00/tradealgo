@@ -8,6 +8,7 @@ def hurst(price, min_lag=2, max_lag=100):
     lags = np.arange(min_lag, max_lag + 1)
     tau = [np.std(np.subtract(price[lag:], price[:-lag]))
            for lag in lags]
+    print(lags, tau)
     m = np.polyfit(np.log10(lags), np.log10(tau), 1)
     return m, lags, tau
 
@@ -38,7 +39,7 @@ df.columns = df.columns.swaplevel()
 
 vals = {c[0]: hurst(df[c].dropna().values) for c in df.columns}
 
-print(vals)
+print(vals.keys())
 # def plotHurst(m, x, y, series, name):
 #     fig, ax = plt.subplots(1, 2, figsize=(15, 6))
 #     ax[0].plot(np.log10(x), m[0] * np.log10(x) + m[1])
@@ -56,6 +57,6 @@ print(vals)
 
 
 for k, v in vals.items():
-    print(v)
-    # fig, ax = plotHurst(*v, df[k], k)
-    # plt.show()
+    print(v[0][0])
+# fig, ax = plotHurst(*v, df[k], k)
+# plt.show()
