@@ -190,9 +190,3 @@ for key, value in hurst_dict.items():
     mvStd = pd.DataFrame(df3).rolling(ceil(value[1])).std()
 
     print(key, mdd(ols_result.resid), mvAvg, mvStd)
-
-# lookback = round(half_life(portf_3_assets))
-# د) strategy reverting-mean Linear که در اسلاید شماره 19 فصل strategies reverting mean آمده را روي
-# 10 سري فوق اعمال نموده و سه معیار return percent annual ،ratio Sharpe و drawdown max را براي آنها
-# محاسبه نمایید. از زمان life-half براي اندازه back-look در محاسبهي average moving و standard moving
-# deviation استفاده نمایید.
