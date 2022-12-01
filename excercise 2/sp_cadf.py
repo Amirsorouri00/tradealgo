@@ -1,4 +1,5 @@
 import datetime
+import math
 from math import ceil, log
 
 import numpy as np
@@ -119,7 +120,7 @@ def half_life(z_array):
 
 hurst_dict = {}
 for st in stationary_series:
-    if len(hurst_dict.keys()) == 10:
+    if len(hurst_dict.keys()) == 100:
         break
     df1 = full_stock_data[MEASURE][st[0]]
     df2 = full_stock_data[MEASURE][st[1]]
@@ -131,8 +132,6 @@ for st in stationary_series:
     if (m_mr[0] <= 0.4 and m_mr[0] >= 0 and hl < 50):
         hurst_dict[st[0]+':'+st[1]] = [m_mr[0], hl]
 
-# print(hurst_dict.keys())
-
 
 def Z_Score(values, n, lookback):
     """
@@ -143,13 +142,16 @@ def Z_Score(values, n, lookback):
     return (series - series.rolling(n).mean())/series.rolling(lookback).std()
 
 
+lookback = 30
+
+
 class Z_Score_Naive(Strategy):
-    lookback = 30
     threshold = 2
     stoploss = 0.001
 
     def init(self):
-        self.ZScore = self.I(Z_Score, self.data.Close, self.lookback)
+        self.ZScore = self.I(Z_Score, self.data.Close,
+                             self.threshold, lookback)
 
     def next(self):
         if (self.position.is_long) & (self.ZScore > 0):
@@ -181,12 +183,12 @@ def mdd(prices: list):
 
 for key, value in hurst_dict.items():
     tickers = key.split(':')
-    df1 = full_stock_data[MEASURE][tickers[0]]
-    df2 = full_stock_data[MEASURE][tickers[1]]
+    # df1 = full_stock_data[MEASURE][tickers[0]]
+    # df2 = full_stock_data[MEASURE][tickers[1]]
+    asdf = yf.download(tickers[0], start, end)
+    asdf2 = yf.download(tickers[1], start, end)
 
-    ols_result = OLS(df1, df2).fit()
-    df3, _ = merge(ols_result.resid)
-    mvAvg = pd.DataFrame(df3).rolling(ceil(value[1])).mean()
-    mvStd = pd.DataFrame(df3).rolling(ceil(value[1])).std()
-
-    print(key, mdd(ols_result.resid), mvAvg, mvStd)
+    ols_result = OLS(asdf, asdf2).fit()
+    s = Backtest(pd.DataFrame(ols_result.resid), Z_Score_Naive)
+    stats = s.run()
+    print(tickers, stats)
