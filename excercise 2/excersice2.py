@@ -93,6 +93,8 @@ for i in RESOURCE:
         except:
             continue
 
+print(stationary_series)
+
 
 def hurst(price, min_lag=2, max_lag=100):
     lags = np.arange(min_lag, max_lag + 1)
@@ -120,7 +122,7 @@ def half_life(z_array):
 
 hurst_dict = {}
 for st in stationary_series:
-    if len(hurst_dict.keys()) == 100:
+    if len(hurst_dict) == 100:
         break
     df1 = full_stock_data[MEASURE][st[0]]
     df2 = full_stock_data[MEASURE][st[1]]
@@ -129,6 +131,7 @@ for st in stationary_series:
 
     m_mr, lag_mr, rs_mr = hurst(df3)
     hl = half_life(df3)
+    print(st, m_mr[0], hl)
     if (m_mr[0] <= 0.4 and m_mr[0] >= 0 and hl < 50):
         hurst_dict[st[0]+':'+st[1]] = [m_mr[0], hl]
 
